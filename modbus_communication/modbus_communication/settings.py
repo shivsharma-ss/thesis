@@ -26,10 +26,21 @@ SECRET_KEY = 'django-insecure-&rvk6mb9nom1oi)+9_i)a0nt(vyc)9^#8qd%jye3#rv&0f_l5q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Load the IP address from the file
+def get_ip_address(file_path='ip_address.txt'):
+    try:
+        with open(file_path, 'r') as file:
+            return file.read().strip()
+    except Exception:
+        return '192.168.88.253'  # Default IP if file not found
+
+IP_ADDRESS = get_ip_address()
+
+
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '192.168.88.254',
+    IP_ADDRESS,
 ]
 
 
@@ -124,6 +135,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Additional locations of static files
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
