@@ -1,18 +1,8 @@
 from django.db import models
-import json
-import os
-
-# Import the JSON file path from webjsondatagetter.py
-from webjsondatagetter import DEFAULT_FILE_PATH as JSON_FILE_PATH
-
-# Load signals from JSON file
-with open(JSON_FILE_PATH) as f:
-    modules_data = json.load(f)
-    IN_SIGNALS = [(entry['signal'], entry['port']) for entry in modules_data if entry['direction'] == 'in']
-    OUT_SIGNALS = [(entry['signal'], entry['port']) for entry in modules_data if entry['direction'] == 'out']
+from config import IN_SIGNALS, OUT_SIGNALS
 
 class ModbusConfig(models.Model):
-    ip_address = models.CharField(max_length=15, default='192.168.88.253')
+    ip_address = models.CharField(max_length=15, default='192.168.88.254')
     port = models.IntegerField(default=502)
 
 class Signal(models.Model):
@@ -24,9 +14,19 @@ class Signal(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'direction': self.direction,
+            'port': self.port,
+            'state': self.state,
+            'program_number': self.program_number,
+        }
 
 def create_signal_states():
     fields = {
+        '__module__': __name__,
         'program_number': models.IntegerField(default=0),
         'program_acknowledge': models.IntegerField(default=0)
     }

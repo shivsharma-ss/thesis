@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import django
+from django.conf import settings
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'modbus_communication.settings')
@@ -15,14 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from modbus_app.models import Signal
 import time
 from datetime import datetime
-
-DEFAULT_IP_ADDRESS = '192.168.88.253'
-DEFAULT_USERNAME = 'Bosch'
-DEFAULT_PASSWORD = 'Robert'
-DEFAULT_MODULE_NAME = 'LuxaSim16-01'
-DEFAULT_FILE_PATH = 'C:\\Users\\SHS1MT.DE\\Desktop\\web\\log_files\\modules.json'
-DEFAULT_LOG_FILE_PATH = 'C:\\Users\\SHS1MT.DE\\Desktop\\web\\log_files\\ip_address.txt'
-MAX_RETRIES = 5  # Number of retries for connection
+from config import DEFAULT_IP_ADDRESS, DEFAULT_USERNAME, DEFAULT_PASSWORD, DEFAULT_MODULE_NAME, DEFAULT_JSON_FILE_PATH, DEFAULT_LOG_FILE_PATH, MAX_RETRIES
 
 class CustomError(Exception):
     pass
@@ -66,10 +60,9 @@ def save_json_to_file(json_content, file_path):
     print(f"JSON data saved to {file_path}")
 
 def save_ip_address(ip_address, log_file_path):
-    current_time = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    with open(log_file_path, 'a') as file:
-        file.write(f"{current_time} - {ip_address}\n")
-    print(f"IP address {ip_address} logged to {log_file_path} with timestamp {current_time}")
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(f"{datetime.now()}: {ip_address}\n")
+    print(f"IP address {ip_address} logged to {log_file_path} with timestamp")
 
 def save_signals_to_db(file_path):
     with open(file_path, 'r') as file:
@@ -115,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument('--username', type=str, default=DEFAULT_USERNAME, help='The username for login')
     parser.add_argument('--password', type=str, default=DEFAULT_PASSWORD, help='The password for login')
     parser.add_argument('--module_name', type=str, default=DEFAULT_MODULE_NAME, help='The module name to filter the JSON data')
-    parser.add_argument('--file_path', type=str, default=DEFAULT_FILE_PATH, help='The path where the JSON data should be saved')
+    parser.add_argument('--file_path', type=str, default=DEFAULT_JSON_FILE_PATH, help='The path where the JSON data should be saved')
     parser.add_argument('--log_file_path', type=str, default=DEFAULT_LOG_FILE_PATH, help='The path where the IP address should be logged')
 
     args = parser.parse_args()

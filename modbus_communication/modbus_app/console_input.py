@@ -1,4 +1,4 @@
-from modbus_communication import data_bank, bit_to_int, set_updated_bits_callback
+from modbus_communication import bit_to_int, set_updated_bits_callback, write_to_register
 
 def user_input():
     while True:
@@ -8,12 +8,13 @@ def user_input():
             continue
         bin_list = [int(bit) for bit in user_input_value.zfill(16)]
         value = bit_to_int(bin_list)
-        data_bank.set_holding_registers(0, [value])
-        print(f"{value} written to register 0.")
-        print(f"{bin_list} written to register 0.")
+        write_to_register(value)
+        print(f"{value} written.")
+        print(f"{bin_list} written to the register 0.\n")
 
 def display_updated_bits(bits):
-    print(f"Updated bits: {bits}")
+    print(f"\nUpdated bits: {bits}")
+    print("Enter Bits: ")
 
 if __name__ == "__main__":
     set_updated_bits_callback(display_updated_bits)

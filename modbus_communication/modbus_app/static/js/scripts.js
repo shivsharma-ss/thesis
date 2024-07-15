@@ -1,80 +1,80 @@
-/* static/js/scripts.js */
-function updateWrittenBits() {
-    const formData = $('#config-form').serializeArray();
-    let bits = Array(16).fill(0);
-
-    formData.forEach(item => {
-        if (item.name === 'program_number') {
-            let programBits = parseInt(item.value).toString(2).padStart(8, '0').split('').map(Number);
-            for (let i = 0; i < programBits.length; i++) {
-                bits[8 + i] = programBits[i];
+$(document).ready(function () {
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
-        } else {
-            bits[{
-                enable: 0,
-                clockwise: 1,
-                counter_clockwise: 2,
-                ready: 3,
-                ok: 4
-            }[item.name]] = item.value === 'true' || item.value === 'on' ? 1 : 0;
         }
-    });
-
-    $('#written_bits').val(bits.join(''));
-}
-
-function changeProgramNumber(delta) {
-    let currentValue = parseInt($('#program_number').val());
-    let newValue = currentValue + delta;
-    if (newValue >= 0 && newValue <= 255) {
-        $('#program_number').val(newValue);
-        updateWrittenBits();
+        return cookieValue;
     }
-}
 
-$('#send-signal-btn').click(function() {
-    $.ajax({
-        type: 'POST',
-        url: $('#config-form').attr('action'),
-        data: $('#config-form').serialize(),
-        success: function(response) {
-            alert('Signal sent successfully.');
-        },
-        error: function() {
-            alert('Failed to send signal.');
+    const csrftoken = getCookie('csrftoken');
+
+    function updateWrittenBits() {
+        var bits = [];
+        input_signals.forEach(function(signal) {
+            var checkbox = document.getElementById(signal.name);
+            bits[16 - signal.port] = checkbox.checked ? 1 : 0;
+        });
+        var writtenBits = bits.join('');
+        document.getElementById('written_bits').value = writtenBits;
+    }
+
+    function changeProgramNumber(increment) {
+        var programNumberInput = document.getElementById('program_number');
+        var currentProgramNumber = parseInt(programNumberInput.value) || 0;
+        var newProgramNumber = currentProgramNumber + increment;
+        if (newProgramNumber >= 0 && newProgramNumber <= 255) {
+            programNumberInput.value = newProgramNumber;
+            updateWrittenBits();
         }
+    }
+
+    $('#send-signal-btn').click(function() {
+        var formData = $('#config-form').serialize();
+        $.ajax({
+            type: "POST",
+            url: "/send_signal/",
+            data: formData,
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    console.log('Signal sent successfully.');
+                } else {
+                    console.log('Failed to send signal.');
+                }
+            }
+        });
     });
-});
 
-$('#edit-ip-btn').click(function() {
-    $('#ip_address').prop('disabled', false);
-});
+    setInterval(function() {
+        $.ajax({
+            url: "/api/data",
+            method: 'GET',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            },
+            success: function(data) {
+                output_signals = data.output_signals;
+                updateOutputIndicators();
+            }
+        });
+    }, 1000);
 
-$('#edit-port-btn').click(function() {
-    $('#port').prop('disabled', false);
+    function updateOutputIndicators() {
+        output_signals.forEach(function(signal) {
+            var indicator = document.getElementById(signal.name + "-indicator");
+            if (indicator) {
+                indicator.className = signal.state ? 'indicator green' : 'indicator red';
+            }
+        });
+    }
 });
-
-$('#config-form').submit(function(event) {
-    event.preventDefault();
-    $.ajax({
-        type: 'POST',
-        url: $('#config-form').attr('action'),
-        data: $(this).serialize(),
-        success: function(response) {
-            $('#received_bits').val(response.received_bits);
-            updateIndicators(response.received_bits);
-        },
-        error: function() {
-            alert('Failed to update signals.');
-        }
-    });
-});
-
-function updateIndicators(bits) {
-    const bitArray = bits.split('');
-    document.getElementById('ready-indicator').className = bitArray[3] == '1' ? 'indicator green' : 'indicator red';
-    document.getElementById('nok-indicator').className = bitArray[5] == '1' ? 'indicator green' : 'indicator red';
-    document.getElementById('cycle-complete-indicator').className = bitArray[7] == '1' ? 'indicator green' : 'indicator red';
-    document.getElementById('ok-indicator').className = bitArray[4] == '1' ? 'indicator green' : 'indicator red';
-    document.getElementById('in-cycle-indicator').className = bitArray[6] == '1' ? 'indicator green' : 'indicator red';
-}

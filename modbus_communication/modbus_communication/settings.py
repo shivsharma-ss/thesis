@@ -32,7 +32,7 @@ def get_ip_address(file_path='ip_address.txt'):
         with open(file_path, 'r') as file:
             return file.read().strip()
     except Exception:
-        return '192.168.88.253'  # Default IP if file not found
+        return '192.168.88.251'  # Default IP if file not found
 
 IP_ADDRESS = get_ip_address()
 
@@ -71,7 +71,7 @@ ROOT_URLCONF = 'modbus_communication.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'modbus_app/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -138,7 +138,7 @@ STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    os.path.join(BASE_DIR, 'modbus_app/static'),
 ]
 
 # Default primary key field type

@@ -1,50 +1,66 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from .models import ModbusConfig, Signal, SignalState
-from modbus_communication import data_bank, int_to_bit, bit_to_int, received_bits, written_bits, set_updated_bits_callback
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Modbus Communication</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    {% load custom_filters %}
+    <form id="config-form" method="POST">
+        {% csrf_token %}
+        <div class="config-section">
+            <div>
+                <label for="ip_address">IP Address:</label>
+                <input type="text" id="ip_address" name="ip_address" value="{{ config.ip_address }}" disabled>
+                <button type="button" id="edit-ip-btn">Change IP</button><br>
+                <label for="port">Port:</label>
+                <input type="text" id="port" name="port" value="{{ config.port }}" disabled>
+                <button type="button" id="edit-port-btn">Change Port</button><br>
 
-def index(request):
-    global received_bits, written_bits
-    config = ModbusConfig.objects.first()
-    signals = Signal.objects.all()
-    input_signals = signals.filter(direction='in')
-    output_signals = signals.filter(direction='out')
-    return render(request, 'modbus_app/index.html', {
-        'config': config,
-        'input_signals': input_signals,
-        'output_signals': output_signals,
-        'received_bits': received_bits,
-        'written_bits': written_bits
-    })
+                {% for signal in input_signals %}
+                <div class="slider-container">
+                    <label class="switch">
+                        <input type="checkbox" id="{{ signal.name }}" name="{{ signal.name }}" {% if signal.state %}checked{% endif %} onchange="updateWrittenBits()">
+                        <span class="slider round"></span>
+                    </label>
+                    <label class="slider-label" for="{{ signal.name }}">{{ signal.name }}</label>
+                </div>
+                {% endfor %}
 
-def update_signals(request):
-    global received_bits
-    if request.method == 'POST':
-        return JsonResponse({'status': 'success', 'received_bits': received_bits})
-    return JsonResponse({'status': 'failed'})
+                <label>Program Number:</label>
+                <div class="program-control">
+                    <button type="button" onclick="changeProgramNumber(-1)">&#9660;</button>
+                    <input type="number" id="program_number" name="program_number" value="{{ input_signals.0.program_number }}" min="0" max="255" oninput="updateWrittenBits()">
+                    <button type="button" onclick="changeProgramNumber(1)">&#9650;</button>
+                </div><br>
+            </div>
 
-def send_signal(request):
-    global written_bits
-    if request.method == 'POST':
-        signals = Signal.objects.filter(direction='in')
-        bits = [0] * 16  # Initialize 16-bit array
+            <div class="output-section">
+            {% for signal in output_signals %}
+                <div class="output-item">
+                    <span class="indicator {% if signal.state %}green{% else %}red{% endif %}" id="{{ signal.name }}-indicator"></span>
+                    <span>{{ signal.name }}</span>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
 
-        for signal in signals:
-            signal_value = request.POST.get(signal.name) == 'true'
-            if 'Prog' in signal.name:
-                signal.program_number = int(request.POST.get(f'{signal.name}_program_number', 0))
-            signal.save()
-            bits[16 - signal.port] = int(signal_value)  # Map the signal to the correct bit position
+        <button type="submit" formaction="{% url 'update_signals' %}">Update Signals</button>
+        <button type="button" id="send-signal-btn">Send Signal</button>
+    </form>
 
-        written_bits = "".join(map(str, bits))
-        values = bit_to_int(bits)
-        data_bank.set_holding_registers(0, [values])
+    <br>
+    <label>Received Bits:</label>
+    <textarea id="received_bits" readonly>{{ received_bits }}</textarea><br>
+    <label>Bits to be Written:</label>
+    <textarea id="written_bits" readonly>{{ written_bits }}</textarea><br>
 
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'failed'})
-
-def update_received_bits(bits):
-    global received_bits
-    received_bits = bits
-
-set_updated_bits_callback(update_received_bits)
+    <script>
+        var input_signals = JSON.parse('{{ input_signals|escapejs|safe }}');
+        var output_signals = JSON.parse('{{ output_signals|escapejs|safe }}');
+    </script>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>

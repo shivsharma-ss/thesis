@@ -1,6 +1,7 @@
 from pyModbusTCP.server import DataBank, ModbusServer
 from threading import Thread
 from time import sleep
+import logging
 
 data_bank = DataBank()
 
@@ -13,7 +14,6 @@ def bit_to_int(bin_list):
     return int(bin_str, 2)
 
 received_bits = ""
-written_bits = ""
 updated_bits_callback = None
 
 def set_updated_bits_callback(callback):
@@ -32,21 +32,26 @@ def check_for_updates():
                 updated_bits_callback(received_bits)
             previous_state = current_state
         sleep(0.05)
+        logging.info(f'Checking for updates. Current state: {current_state}, Received bits: {received_bits}')
 
 def start_modbus_server():
-    ip_address = '192.168.88.253'
+    ip_address = '192.168.88.252'
     port = 502
     server = ModbusServer(ip_address, port, no_block=True, data_bank=data_bank)
     try:
         server.start()
+        logging.info('Modbus server started.')
         check_for_updates_thread = Thread(target=check_for_updates)
         check_for_updates_thread.daemon = True
         check_for_updates_thread.start()
         while True:
             sleep(1)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
         server.stop()
+
+def write_to_register(value):
+    data_bank.set_holding_registers(0, [value])
 
 modbus_thread = Thread(target=start_modbus_server)
 modbus_thread.daemon = True

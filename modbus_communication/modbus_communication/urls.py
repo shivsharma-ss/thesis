@@ -22,5 +22,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     path('update_signals/', views.update_signals, name='update_signals'),
-    path('send_signal/', views.send_signal, name='send_signal'),
+    path('send_signal', views.send_signal, name='send_signal'),
+    #path('change_port/', views.change_port, name='change_port'),
+    path('updateState', views.update_state, name='update_state'),
+    path('api/data', views.api_data, name='api_data'),
 ]

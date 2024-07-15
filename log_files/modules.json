@@ -106,7 +106,7 @@
         "active": true,
         "direction": "in",
         "metasignal": "",
-        "signal": "",
+        "signal": "En",
         "id": 27
     },
     {
@@ -117,7 +117,7 @@
         "active": true,
         "direction": "in",
         "metasignal": "",
-        "signal": "",
+        "signal": "Cw",
         "id": 28
     },
     {
@@ -128,7 +128,7 @@
         "active": true,
         "direction": "in",
         "metasignal": "",
-        "signal": "",
+        "signal": "Ccw",
         "id": 29
     },
     {
@@ -348,7 +348,7 @@
         "active": true,
         "direction": "out",
         "metasignal": "",
-        "signal": "",
+        "signal": "EnAck",
         "id": 49
     },
     {
@@ -359,7 +359,7 @@
         "active": true,
         "direction": "out",
         "metasignal": "",
-        "signal": "EnAck",
+        "signal": "",
         "id": 50
     }
 ]
